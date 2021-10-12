@@ -81,25 +81,24 @@ def get_extention(filename):
     return extention
 
 
-def start(albumfile, csvfile, delimiter):
+def start(albumfile, csvfile, delimiter, log=None):
     """Run the script."""
     Track.file_extention = get_extention(albumfile)
-    logfile = open('logfile.txt', 'w')
     tracks = get_tracks(csvfile, delimiter)
     for index, track in enumerate(tracks):
-        print(f'{index+1}/{len(tracks)} Extracting Track: {track.title}')
+        print(f'{index+1}/{len(tracks)} Track: {track.title}')
         try:
             subprocess.run(
                 f'ffmpeg -i {albumfile} {track.make_cmd_str()}',
                 shell=True,
-                stdout=logfile,
-                stderr=logfile)
+                stdout=log,
+                stderr=log)
 
         except Exception:
             print(f'Error occured while extracting "{track.title}"')
             print('Terminating')
-            logfile.close()
-            exit(1)
+            return 1
+    return 0
 
 
 if __name__ == '__main__':
@@ -115,14 +114,22 @@ if __name__ == '__main__':
     parser.add_argument('--delimiter', type=str, nargs=1, default=',',
                         help='delimiter for the csv file, defaults to comma')
 
+    parser.add_argument('--log', type=str, nargs=1, default='log.txt',
+                        help='log file (defaults to log.txt in cwd)')
+
     args = parser.parse_args()
     albumfile = args.albumfile[0]
     csvfile = args.csvfile[0]
     delimiter = args.delimiter[0]
+    logfile = args.log[0]
 
     try:
-        proc = subprocess.run(['ffmpeg', '-h'], check=True)
-        start(albumfile, csvfile, delimiter)
+        log = open(logfile, 'w')
+        proc = subprocess.run(['ffmpeg', '-h'],
+                              check=True,
+                              stdout=log,
+                              stderr=log)
+        start(albumfile, csvfile, delimiter, log)
 
     except subprocess.CalledProcessError:
         print('ffmpeg exicted with non-zero exit code!')
@@ -130,3 +137,5 @@ if __name__ == '__main__':
         print('Error: ffmpeg not found!')
     except Exception:
         print('Error: some error occured!')
+    finally:
+        log.close()
