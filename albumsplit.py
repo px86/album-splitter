@@ -89,12 +89,11 @@ def start(albumfile, csvfile, delimiter):
     for index, track in enumerate(tracks):
         print(f'{index+1}/{len(tracks)} Extracting Track: {track.title}')
         try:
-            proc = subprocess.run(['ffmpeg', '-i',
-                                   albumfile,
-                                   track.make_cmd_str()],
-                                  stdout=logfile, stderr=logfile)
-            if proc.returncode == 0:
-                print('Success')
+            subprocess.run(
+                f'ffmpeg -i {albumfile} {track.make_cmd_str()}',
+                shell=True,
+                stdout=logfile,
+                stderr=logfile)
 
         except Exception:
             print(f'Error occured while extracting "{track.title}"')
